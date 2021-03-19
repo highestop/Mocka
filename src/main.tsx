@@ -54,11 +54,10 @@ const App = () => {
 
   const calculateCredit = useCallback(() => {
     console.log(scores);
-    const average =
-      Perspectives.reduce(
-        (sum, p) => sum + p.weight * (scores[p.key] || 0),
-        0
-      ) / Perspectives.length;
+    const average = Perspectives.reduce(
+      (sum, p) => sum + p.weight * (scores[p.key] || 0),
+      0
+    );
     updateCredit(average);
   }, [scores]);
 
