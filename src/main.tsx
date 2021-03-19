@@ -11,18 +11,18 @@ import {
   Collapse,
   Typography,
   Input,
-  Form,
   Button,
   Space,
   Radio,
   Statistic,
   Tag,
+  Popover,
 } from 'antd';
 import Perspectives from './confs/perspective';
 import Evaluation from './confs/evaluation';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 type PerspectiveKey = typeof Perspectives[number]['key'];
 
@@ -46,10 +46,14 @@ const App = () => {
       ...state,
       [action.key]: action.score,
     }),
-    {}
+    Perspectives.reduce((scores, p) => {
+      scores[p.key] = 0;
+      return scores;
+    }, {} as any)
   );
 
   const calculateCredit = useCallback(() => {
+    console.log(scores);
     const average =
       Perspectives.reduce(
         (sum, p) => sum + p.weight * (scores[p.key] || 0),
@@ -62,16 +66,61 @@ const App = () => {
 
   const [credit, updateCredit] = useState<number>();
 
-  useEffect(() => {
-    calculateCredit();
-    console.log(credit);
-  }, [scores]);
+  useEffect(() => calculateCredit(), [scores]);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Layout.Content style={{ backgroundColor: '#fff', padding: '2rem' }}>
         <Card style={{ borderBottom: 0, borderRadius: 0 }}>
-          <Statistic title="总分" value={credit?.toFixed(2)}></Statistic>
+          <Statistic
+            title={
+              <>
+                总分
+                <Popover
+                  content={
+                    <Typography>
+                      总分会根据各项分数自动计算
+                      <ul style={{ marginTop: '0.5rem' }}>
+                        <li>
+                          <Typography.Text strong>权重</Typography.Text>
+                          ：先选择期望，不同期望下不同方面考察点的占比不同，可以在相应标题旁看到
+                        </li>
+                        <li>
+                          <Typography.Text strong>打分</Typography.Text>：分别有
+                          9 档，评分与计算分数的关系为：
+                          <ul>
+                            <li>
+                              <Typography.Text strong>
+                                0（ 未考察 ）
+                              </Typography.Text>
+                              : 0
+                            </li>
+                            {Evaluation.map(e => (
+                              <li>
+                                <Typography.Text strong>
+                                  {e.score}
+                                </Typography.Text>
+                                : {e.value}
+                              </li>
+                            ))}
+                          </ul>
+                        </li>
+                      </ul>
+                    </Typography>
+                  }
+                  title={
+                    <Typography.Title level={4} style={{ marginTop: '0.5rem' }}>
+                      分数计算说明
+                    </Typography.Title>
+                  }
+                  trigger="click"
+                >
+                  <QuestionCircleOutlined style={{ marginLeft: '0.5rem' }} />
+                </Popover>
+              </>
+            }
+            value={credit?.toFixed(2)}
+          ></Statistic>
         </Card>
         <Collapse
           defaultActiveKey={Perspectives.map(p => p.key).concat(
@@ -133,8 +182,12 @@ const App = () => {
                         score: e.target.value,
                       })
                     }
+                    value={scores[p.key]}
                     style={{ marginTop: '1rem' }}
                   >
+                    <Radio value={0} key={`${p.key}-0`}>
+                      0（ 未考察 ）
+                    </Radio>
                     {Evaluation.map(e => (
                       <Radio value={e.value} key={`${p.key}-${e.value}`}>
                         {e.score}
