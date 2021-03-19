@@ -18,8 +18,8 @@ import {
   Tag,
   Popover,
 } from 'antd';
-import Perspectives from './confs/perspective';
-import Evaluation from './confs/evaluation';
+import Perspectives from './presets/perspective';
+import Evaluation from './presets/evaluation';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
@@ -82,12 +82,13 @@ const App = () => {
                       总分会根据各项分数自动计算
                       <ul style={{ marginTop: '0.5rem' }}>
                         <li>
-                          <Typography.Text strong>权重</Typography.Text>
-                          ：先选择期望，不同期望下不同方面考察点的占比不同，可以在相应标题旁看到
+                          <Typography.Text type="secondary">
+                            先选择期望，不同期望下不同方面考察点的占比不同，可以在相应标题旁看到（
+                            尽情期待 ）
+                          </Typography.Text>
                         </li>
                         <li>
-                          <Typography.Text strong>打分</Typography.Text>：分别有
-                          9 档，评分与计算分数的关系为：
+                          计分有 9 档，评分与计算分数的关系为：
                           <ul>
                             <li>
                               <Typography.Text strong>
