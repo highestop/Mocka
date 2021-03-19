@@ -1,5 +1,10 @@
 export default [
   {
+    score: '0',
+    value: 0,
+    desc: '未考察',
+  },
+  {
     score: '2',
     value: 2,
     desc: '太水了，TA 来我走',

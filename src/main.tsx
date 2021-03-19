@@ -23,6 +23,7 @@ import Evaluation from './presets/evaluation';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { calcScores, matchScore } from './presets/expectation';
 
 type PerspectiveKey = typeof Perspectives[number]['key'];
 
@@ -52,18 +53,14 @@ const App = () => {
     }, {} as any)
   );
 
-  const calculateCredit = useCallback(() => {
-    console.log(scores);
-    const average = Perspectives.reduce(
-      (sum, p) => sum + p.weight * (scores[p.key] || 0),
-      0
-    );
-    updateCredit(average);
-  }, [scores]);
+  const calculateCredit = useCallback(
+    () => updateCredit(matchScore(calcScores(scores))),
+    [scores]
+  );
 
   const [summary, updateSummary] = useState<string>();
 
-  const [credit, updateCredit] = useState<number>();
+  const [credit, updateCredit] = useState<string>();
 
   useEffect(() => calculateCredit(), [scores]);
 
@@ -82,19 +79,13 @@ const App = () => {
                       <ul style={{ marginTop: '0.5rem' }}>
                         <li>
                           <Typography.Text type="secondary">
-                            先选择期望，不同期望下不同方面考察点的占比不同，可以在相应标题旁看到（
-                            尽情期待 ）
+                            先选择期望，不同期望下不同方面考察点的权重不同，可以在相应标题旁看到比重（
+                            目前是写死的，多种期望策略配置尽情期待 ）
                           </Typography.Text>
                         </li>
                         <li>
-                          计分有 9 档，评分与计算分数的关系为：
-                          <ul>
-                            <li>
-                              <Typography.Text strong>
-                                0（ 未考察 ）
-                              </Typography.Text>
-                              : 0
-                            </li>
+                          档位有 9 档，评分与计算分数的关系为：
+                          <ul style={{ marginTop: '0.5rem' }}>
                             {Evaluation.map(e => (
                               <li>
                                 <Typography.Text strong>
@@ -104,6 +95,14 @@ const App = () => {
                               </li>
                             ))}
                           </ul>
+                        </li>
+                        <li>默认每一项都为零分，表示未考察</li>
+                        <li>
+                          若对某一项进行打分，该项得分会被计入权重，自动计算得到总分
+                        </li>
+                        <li>
+                          允许最终存在未考察的项，该项的 0
+                          分不会计入权重，不影响总分
                         </li>
                       </ul>
                     </Typography>
@@ -119,7 +118,7 @@ const App = () => {
                 </Popover>
               </>
             }
-            value={credit?.toFixed(2)}
+            value={credit}
           ></Statistic>
         </Card>
         <Collapse
@@ -185,9 +184,6 @@ const App = () => {
                     value={scores[p.key]}
                     style={{ marginTop: '1rem' }}
                   >
-                    <Radio value={0} key={`${p.key}-0`}>
-                      0（ 未考察 ）
-                    </Radio>
                     {Evaluation.map(e => (
                       <Radio value={e.value} key={`${p.key}-${e.value}`}>
                         {e.score}
