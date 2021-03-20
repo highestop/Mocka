@@ -24,7 +24,7 @@ import Perspectives from './perspective.json';
 import Scores from './score.json';
 import { useCallback, useMemo, useReducer } from 'react';
 // import { CopyToClipboard } from 'react-copy-to-clipboard';
-import { QuestionCircleOutlined } from '@ant-design/icons';
+import { GithubOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { calcScores, ExpectationMap, matchScore, SortedScores } from './calc';
 import Expectation from './expectation.json';
 
@@ -337,7 +337,11 @@ const App = () => {
         </Collapse>
       </Layout.Content>
       <Layout.Footer style={{ textAlign: 'center', color: 'grey' }}>
-        ©Copyright by ChenYn
+        ©Copyright by
+        <a href="https://github.com/highestop/mocka" target="blank">
+          <GithubOutlined style={{ margin: '0 0.25rem' }} />
+          Highestop Mocka
+        </a>
       </Layout.Footer>
     </Layout>
   );
