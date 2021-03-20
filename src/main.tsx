@@ -17,13 +17,13 @@ import {
   Statistic,
   Tag,
   Popover,
+  Tooltip,
 } from 'antd';
 import Perspectives from './perspective.json';
-import Evaluation from './score.json';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { calcScores, matchScore } from './calc';
+import { calcScores, matchScore, SortedScores } from './calc';
 
 type PerspectiveKey = typeof Perspectives[number]['key'];
 
@@ -86,7 +86,7 @@ const App = () => {
                         <li>
                           档位有 9 档，评分与计算分数的关系为：
                           <ul style={{ marginTop: '0.5rem' }}>
-                            {Evaluation.map(e => (
+                            {SortedScores.map(e => (
                               <li key={`tip-${e.value}`}>
                                 <Typography.Text strong>
                                   {e.score}
@@ -96,6 +96,15 @@ const App = () => {
                             ))}
                           </ul>
                         </li>
+                        <li>
+                          但在计算最终得分时，用来卡分的合格线，是每一档分数与比其低一档的分数的平均值
+                          <ul style={{ marginTop: '0.5rem' }}>
+                            <li>
+                              这样是为了避免如四项得分分别为 3、3、3、2.5+
+                              时就一定到不了 3 的情况
+                            </li>
+                          </ul>
+                        </li>
                         <li>默认每一项都为零分，表示未考察</li>
                         <li>
                           若对某一项进行打分，该项得分会被计入权重，自动计算得到总分
@@ -103,6 +112,16 @@ const App = () => {
                         <li>
                           允许最终存在未考察的项，该项的 0
                           分不会计入权重，不影响总分
+                          <ul style={{ marginTop: '0.5rem' }}>
+                            <li>
+                              如：只有一项 0.4 被评估时，实际权重是 0.4 / 0.4 =
+                              1
+                            </li>
+                            <li>
+                              如：有 0.4 和 0.1 两项被评估时，0.4 的实际权重是
+                              0.4 / (0.4 + 0.1) = 0.8
+                            </li>
+                          </ul>
                         </li>
                       </ul>
                     </Typography>
@@ -131,17 +150,32 @@ const App = () => {
             header={<Typography.Text strong>综合评价</Typography.Text>}
             key="summary"
           >
-            <Input.TextArea
-              placeholder="请输入"
-              rows={8}
-              onChange={e => updateSummary(e.target.value)}
-            ></Input.TextArea>
-            <CopyToClipboard text={summary || ''}>
-              <Button style={{ marginTop: '1rem' }}>
-                <CopyOutlined />
-                Copy
-              </Button>
-            </CopyToClipboard>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Input.TextArea
+                  placeholder="请输入"
+                  rows={8}
+                  onChange={e => updateSummary(e.target.value)}
+                ></Input.TextArea>
+              </Col>
+              <Col span={12}>
+                <Card style={{ borderColor: '#ececec', height: '100%' }}>
+                  <Space direction="vertical" size="large">
+                    <Tooltip title="复制的是纯文本，而非 Markdown 格式富文本。原因是 Moka 系统只支持纯文本">
+                      <CopyToClipboard text={summary || ''}>
+                        <Button>
+                          <CopyOutlined />
+                          Copy
+                        </Button>
+                      </CopyToClipboard>
+                    </Tooltip>
+                    <Typography.Text type="secondary">
+                      <ReactMarkdown children={summary || '无'}></ReactMarkdown>
+                    </Typography.Text>
+                  </Space>
+                </Card>
+              </Col>
+            </Row>
           </Collapse.Panel>
           {Perspectives.map(p => (
             <Collapse.Panel
@@ -184,7 +218,7 @@ const App = () => {
                     value={scores[p.key]}
                     style={{ marginTop: '1rem' }}
                   >
-                    {Evaluation.map(e => (
+                    {SortedScores.map(e => (
                       <Radio value={e.value} key={`${p.key}-${e.value}`}>
                         {e.score}
                       </Radio>
@@ -194,12 +228,14 @@ const App = () => {
                 <Col span={12}>
                   <Card style={{ borderColor: '#ececec', height: '100%' }}>
                     <Space direction="vertical" size="large">
-                      <CopyToClipboard text={comments[p.key]}>
-                        <Button>
-                          <CopyOutlined />
-                          Copy
-                        </Button>
-                      </CopyToClipboard>
+                      <Tooltip title="复制的是纯文本，而非 Markdown 格式富文本。原因是 Moka 系统只支持纯文本">
+                        <CopyToClipboard text={comments[p.key]}>
+                          <Button>
+                            <CopyOutlined />
+                            Copy
+                          </Button>
+                        </CopyToClipboard>
+                      </Tooltip>
                       <Typography.Text type="secondary">
                         <ReactMarkdown
                           children={comments[p.key] || '无'}
