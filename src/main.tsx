@@ -126,9 +126,7 @@ const App = () => {
                           总分会根据各项分数自动计算
                           <ul style={{ marginTop: '0.5rem' }}>
                             <li>
-                              <Typography.Text type="secondary">
-                                先选择期望，不同期望下不同方面考察点的权重不同，可以在相应标题旁看到比重
-                              </Typography.Text>
+                              先选择期望，不同期望下不同方面考察点的权重不同，可以在相应标题旁看到比重
                             </li>
                             <li>
                               档位有 9 档，评分与计算分数的关系为：
