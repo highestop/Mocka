@@ -18,10 +18,11 @@ import {
   Popover,
   Tooltip,
   PageHeader,
+  Popconfirm,
 } from 'antd';
 import Perspectives from './perspective.json';
 import Scores from './score.json';
-import { useMemo, useReducer, useState } from 'react';
+import { useCallback, useMemo, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import { calcScores, ExpectationMap, matchScore, SortedScores } from './calc';
@@ -31,38 +32,66 @@ type PerspectiveKey = typeof Perspectives[number]['key'];
 
 type ScoreCredit = typeof Scores[number]['score'];
 
+const initScores = Perspectives.reduce<{ [key: string]: number }>(
+  (scores, p) => {
+    scores[p.key] = 0;
+    return scores;
+  },
+  {}
+);
+
+const initExpectation = Expectation[0].name;
+
+const getCache = (key: string) => localStorage.getItem(key);
+
+if (!localStorage.getItem('scores')) {
+  localStorage.setItem('scores', JSON.stringify(initScores));
+}
+
+if (!localStorage.getItem('expectation')) {
+  localStorage.setItem('expectation', initExpectation);
+}
+
 const App = () => {
   const [comments, updateComments] = useReducer(
-    (
-      state: { [key: string]: string },
-      action: { key: PerspectiveKey; content: string }
-    ) => ({
-      ...state,
-      [action.key]: action.content,
-    }),
-    {}
+    (state: { [key: string]: string }, action: { [key: string]: string }) => {
+      const newState = {
+        ...state,
+        ...action,
+      };
+      localStorage.setItem('comments', JSON.stringify(newState) || '');
+      return newState;
+    },
+    getCache('comments') ? JSON.parse(getCache('comments') || '{}') : {}
   );
 
   const [scores, updateScores] = useReducer(
-    (
-      state: { [key: string]: number },
-      action: { key: PerspectiveKey; score: number }
-    ) => ({
-      ...state,
-      [action.key]: action.score,
-    }),
-    Perspectives.reduce<{ [key: string]: number }>((scores, p) => {
-      scores[p.key] = 0;
-      return scores;
-    }, {})
+    (state: { [key: string]: number }, action: { [key: string]: number }) => {
+      const newState = {
+        ...state,
+        ...action,
+      };
+      localStorage.setItem('scores', JSON.stringify(newState) || '');
+      return newState;
+    },
+    getCache('scores') ? JSON.parse(getCache('scores') || '{}') : initScores
   );
 
-  const [summary, setSummary] = useState<string>();
+  const [summary, setSummary] = useReducer((_: string, action: string) => {
+    localStorage.setItem('summary', action);
+    return action;
+  }, getCache('summary') || '');
 
-  const [expectation, setExpectation] = useState<string>(Expectation[0].name);
+  const [expectation, setExpectation] = useReducer(
+    (_: string, action: string) => {
+      localStorage.setItem('expectation', action);
+      return action;
+    },
+    getCache('expectation') || initExpectation
+  );
 
   const weights = useMemo<{ [key: string]: number }>(
-    () => ExpectationMap[expectation],
+    () => ExpectationMap[expectation] ?? {},
     [expectation]
   );
 
@@ -70,6 +99,17 @@ const App = () => {
     () => matchScore(calcScores(scores, weights)),
     [scores, expectation]
   );
+
+  const clearCache = useCallback(() => {
+    updateComments({});
+    localStorage.removeItem('comments');
+    updateScores(initScores);
+    localStorage.removeItem('scores');
+    setSummary('');
+    localStorage.removeItem('smmary');
+    setExpectation(initExpectation);
+    localStorage.removeItem('expectation');
+  }, []);
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -146,17 +186,35 @@ const App = () => {
               </>
             }
             extra={
-              <Radio.Group
-                buttonStyle="solid"
-                onChange={e => setExpectation(e.target.value)}
-                defaultValue={expectation}
-              >
-                {Expectation.map(s => (
-                  <Radio.Button value={s.name} key={s.name}>
-                    {s.desc}
-                  </Radio.Button>
-                ))}
-              </Radio.Group>
+              <Space direction="vertical">
+                <Radio.Group
+                  buttonStyle="solid"
+                  onChange={e => setExpectation(e.target.value)}
+                  defaultValue={expectation}
+                >
+                  {Expectation.map(s => (
+                    <Radio
+                      value={s.name}
+                      key={s.name}
+                      style={{
+                        display: 'block',
+                        height: '30px',
+                        lineHeight: '30px',
+                      }}
+                    >
+                      {s.desc}
+                    </Radio>
+                  ))}
+                </Radio.Group>
+                <Popconfirm
+                  title="确定吗？会同时清除页面填写的信息和浏览器缓存信息"
+                  onConfirm={clearCache}
+                  okText="没错！"
+                  cancelText="再想想！"
+                >
+                  <Button danger>下一位（ 清除缓存 ）</Button>
+                </Popconfirm>
+              </Space>
             }
           ></PageHeader>
         </Card>
@@ -173,6 +231,7 @@ const App = () => {
                 <Input.TextArea
                   placeholder="请输入"
                   rows={8}
+                  value={summary}
                   onChange={e => setSummary(e.target.value)}
                 ></Input.TextArea>
               </Col>
@@ -219,18 +278,17 @@ const App = () => {
                   <Input.TextArea
                     placeholder="请输入"
                     rows={8}
+                    value={comments[p.key]}
                     onChange={e =>
                       updateComments({
-                        key: p.key,
-                        content: e.target.value,
+                        [p.key]: e.target.value,
                       })
                     }
                   ></Input.TextArea>
                   <Radio.Group
                     onChange={e =>
                       updateScores({
-                        key: p.key,
-                        score: e.target.value,
+                        [p.key]: e.target.value,
                       })
                     }
                     value={scores[p.key]}
