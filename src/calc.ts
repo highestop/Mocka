@@ -1,5 +1,15 @@
 import Evaluation from './score.json';
 import Perspectives from './perspective.json';
+import Expectation from './expectation.json';
+
+export type ExpectedWeights = Omit<typeof Expectation[number], 'name' | 'desc'>;
+
+export const ExpectationMap = Expectation.reduce<{
+  [name: string]: ExpectedWeights;
+}>((map, e) => {
+  map[e.name] = e;
+  return map;
+}, {});
 
 export const SortedScores = [...Evaluation].sort((a, b) => b.value - a.value);
 
@@ -15,23 +25,10 @@ export const Baselines = SortedScores.map((s, index, arr) => {
   };
 });
 
-export function matchScore(score: number) {
-  console.log('>>> 正在匹配..');
-  let credit: string = '0';
-  // 从最高分开始卡，卡到的一个分数段即是得分
-  Baselines.some(base => {
-    if (score >= base.baseline) {
-      credit = base.score;
-      console.log(`匹配到得分 '${base.score}'(${base.value})`);
-      return true;
-    }
-    return false;
-  });
-  console.log('>>> 匹配结束！');
-  return credit;
-}
-
-export function calcScores(scores: { [key: string]: number }) {
+export function calcScores(
+  scores: { [key: string]: number },
+  weights: { [key: string]: number }
+) {
   console.log('>>> 正在计算..');
   // 先要算权重的总重，原因是当某些项目没有打分时，这些未考察的权重不应被计入（ 是没打分不是打零分 ）
   // 因此先要过一遍项目得分，将有分的权重加和，得到总重
@@ -41,7 +38,7 @@ export function calcScores(scores: { [key: string]: number }) {
       // tip for none score perspective
       console.log(`'${p.title}' 未考察, 不会被计入`);
     }
-    return score ? sum + p.weight : sum;
+    return score ? sum + weights[p.key] : sum;
   }, 0);
   console.log(`实际总重为 '${account}'`);
   // 在计算加权和时，每一项的实际权重为预设权重与实际总重的比例
@@ -49,10 +46,26 @@ export function calcScores(scores: { [key: string]: number }) {
   // 再例如有 0.4 和 0.1 两项被评估时，0.4 的实际权重是 0.4 / (0.4 + 0.1) = 0.8
   const average = Perspectives.reduce((sum, p) => {
     const score = scores[p.key];
-    const weighted = account ? (p.weight / account) * score : 0;
+    const weighted = account ? (weights[p.key] / account) * score : 0;
     console.log(`'${p.title}' 的实际加权得分为 '${weighted}'`);
     return sum + weighted;
   }, 0);
   console.log(`>>> 计算结束！最终得分为 '${average}'`);
   return average;
+}
+
+export function matchScore(score: number) {
+  console.log('>>> 正在匹配..');
+  let credit: string = '0';
+  // 从最高分开始卡，卡到的一个分数段即是得分
+  Baselines.some(base => {
+    if (score >= base.baseline) {
+      credit = base.score;
+      console.log(`得分与格合格线 '${base.score}'(${base.value}) 相匹配`);
+      return true;
+    }
+    return false;
+  });
+  console.log('>>> 匹配结束！');
+  return credit;
 }

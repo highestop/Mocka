@@ -1,0 +1,26 @@
+[
+  {
+    "name": "junior",
+    "desc": "初级（ 0-3 年 ）",
+    "basis": 0.3,
+    "algo": 0.4,
+    "project": 0.1,
+    "culture": 0.2
+  },
+  {
+    "name": "senior",
+    "desc": "高级（ 3-5 年 ）",
+    "basis": 0.2,
+    "algo": 0.3,
+    "project": 0.3,
+    "culture": 0.2
+  },
+  {
+    "name": "expert",
+    "desc": "资深、专家（ 5 年以上 ）",
+    "basis": 0.2,
+    "algo": 0.2,
+    "project": 0.4,
+    "culture": 0.2
+  }
+]

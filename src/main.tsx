@@ -14,18 +14,22 @@ import {
   Button,
   Space,
   Radio,
-  Statistic,
   Tag,
   Popover,
   Tooltip,
+  PageHeader,
 } from 'antd';
 import Perspectives from './perspective.json';
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import Scores from './score.json';
+import { useMemo, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { calcScores, matchScore, SortedScores } from './calc';
+import { calcScores, ExpectationMap, matchScore, SortedScores } from './calc';
+import Expectation from './expectation.json';
 
 type PerspectiveKey = typeof Perspectives[number]['key'];
+
+type ScoreCredit = typeof Scores[number]['score'];
 
 const App = () => {
   const [comments, updateComments] = useReducer(
@@ -47,29 +51,33 @@ const App = () => {
       ...state,
       [action.key]: action.score,
     }),
-    Perspectives.reduce((scores, p) => {
+    Perspectives.reduce<{ [key: string]: number }>((scores, p) => {
       scores[p.key] = 0;
       return scores;
-    }, {} as any)
+    }, {})
   );
 
-  const calculateCredit = useCallback(
-    () => updateCredit(matchScore(calcScores(scores))),
-    [scores]
+  const [summary, setSummary] = useState<string>();
+
+  const [expectation, setExpectation] = useState<string>(Expectation[0].name);
+
+  const weights = useMemo<{ [key: string]: number }>(
+    () => ExpectationMap[expectation],
+    [expectation]
   );
 
-  const [summary, updateSummary] = useState<string>();
-
-  const [credit, updateCredit] = useState<string>();
-
-  useEffect(() => calculateCredit(), [scores]);
+  const credit = useMemo<ScoreCredit>(
+    () => matchScore(calcScores(scores, weights)),
+    [scores, expectation]
+  );
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Layout.Content style={{ backgroundColor: '#fff', padding: '2rem' }}>
         <Card style={{ borderBottom: 0, borderRadius: 0 }}>
-          <Statistic
-            title={
+          <PageHeader
+            title={<Typography.Title level={1}>{credit}</Typography.Title>}
+            subTitle={
               <>
                 总分
                 <Popover
@@ -137,13 +145,23 @@ const App = () => {
                 </Popover>
               </>
             }
-            value={credit}
-          ></Statistic>
+            extra={
+              <Radio.Group
+                buttonStyle="solid"
+                onChange={e => setExpectation(e.target.value)}
+                defaultValue={expectation}
+              >
+                {Expectation.map(s => (
+                  <Radio.Button value={s.name} key={s.name}>
+                    {s.desc}
+                  </Radio.Button>
+                ))}
+              </Radio.Group>
+            }
+          ></PageHeader>
         </Card>
         <Collapse
-          defaultActiveKey={Perspectives.map(p => p.key).concat(
-            'summary' as any
-          )}
+          defaultActiveKey={Perspectives.map(p => p.key).concat('summary')}
           style={{ borderRadius: 0 }}
         >
           <Collapse.Panel
@@ -155,7 +173,7 @@ const App = () => {
                 <Input.TextArea
                   placeholder="请输入"
                   rows={8}
-                  onChange={e => updateSummary(e.target.value)}
+                  onChange={e => setSummary(e.target.value)}
                 ></Input.TextArea>
               </Col>
               <Col span={12}>
@@ -183,7 +201,7 @@ const App = () => {
                 <>
                   <Typography.Text strong>{p.title}</Typography.Text>
                   <Tag color="#2db7f5" style={{ marginLeft: '0.5rem' }}>
-                    {p.weight * 100}%
+                    {weights[p.key] * 100}%
                   </Tag>
                 </>
               }
