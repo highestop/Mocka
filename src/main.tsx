@@ -127,8 +127,7 @@ const App = () => {
                           <ul style={{ marginTop: '0.5rem' }}>
                             <li>
                               <Typography.Text type="secondary">
-                                先选择期望，不同期望下不同方面考察点的权重不同，可以在相应标题旁看到比重（
-                                目前是写死的，多种期望策略配置尽情期待 ）
+                                先选择期望，不同期望下不同方面考察点的权重不同，可以在相应标题旁看到比重
                               </Typography.Text>
                             </li>
                             <li>
@@ -212,7 +211,7 @@ const App = () => {
                     ))}
                   </Radio.Group>
                   <Popconfirm
-                    title="确定吗？会同时清除页面填写的信息和浏览器缓存信息"
+                    title="确定吗？会同时清除页面填写的信息和浏览器缓存信息哦~"
                     onConfirm={clearCache}
                     okText="没错！"
                     cancelText="再想想！"
