@@ -18,12 +18,12 @@ import {
   Tag,
   Popover,
 } from 'antd';
-import Perspectives from './presets/perspective';
-import Evaluation from './presets/evaluation';
+import Perspectives from './perspective.json';
+import Evaluation from './score.json';
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import { CopyOutlined, QuestionCircleOutlined } from '@ant-design/icons';
-import { calcScores, matchScore } from './presets/expectation';
+import { calcScores, matchScore } from './calc';
 
 type PerspectiveKey = typeof Perspectives[number]['key'];
 
@@ -87,7 +87,7 @@ const App = () => {
                           档位有 9 档，评分与计算分数的关系为：
                           <ul style={{ marginTop: '0.5rem' }}>
                             {Evaluation.map(e => (
-                              <li>
+                              <li key={`tip-${e.value}`}>
                                 <Typography.Text strong>
                                   {e.score}
                                 </Typography.Text>
