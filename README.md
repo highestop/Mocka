@@ -1,8 +1,8 @@
 # Mocka
 
-## 关于
+Mocka（ Mock for Moka ）是一套在 [Moka 招聘系统](https://www.mokahr.com/) 面试反馈功能上做的一些定制化扩展页面
 
-在 [Moka 招聘系统](https://www.mokahr.com/) 面试反馈功能上的一些定制化扩展
+## 功能
 
 - 能对若干考察点（ Perspective ）分别进行反馈填写及打分（ Score ）
 - 考察点会有相应的权重（ Weight ），根据权重及其分数，自动计算出综合得分（ Credit ）
